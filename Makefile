@@ -86,16 +86,23 @@ new-project: $(REBAR)
 	@echo
 	@read -p "Enter the name of project: " THENAME && \
 	echo && \
+	mkdir -p apps/$$THENAME && \
+	cd apps/$$THENAME && \
 	$(REBAR) create-app appid=$$THENAME && \
+	cd ../../ && \
 	echo "$$TMPL_REBAR_CONFIG" | sed "s/PROJECTNAME/$$THENAME/g" > rebar.config && \
 	mkdir rel && \
 	( cd rel && $(REBAR) create-node nodeid=$$THENAME && cd .. ) && \
-	sed -i.tmp "s/^\(.*{app, $$THENAME, .*\)\]\}$$/\\1, {lib_dir, \"..\"}]}/" rel/reltool.config && \
+	sed -i.tmp "s/^\(.*{lib_dirs, \[\)\(\]\},\)$$/\\1\"..\/deps\", \"..\/apps\"\\2/" rel/reltool.config && \
 	rm -f rel/reltool.config.tmp && \
-	sed -i.tmp "s/^\(.*{lib_dirs, \[\)\(\]\},\)$$/\\1\"..\/deps\"\\2/" rel/reltool.config && \
+	sed -i.tmp "s/{mod_cond, [^}]*}/{mod_cond, all}/" rel/reltool.config && \
+	rm -f rel/reltool.config.tmp && \
+	sed -i.tmp "s/{incl_cond, [^}]*}/{incl_cond, include}/" rel/reltool.config && \
 	rm -f rel/reltool.config.tmp && \
 	sed -i.tmp "s/^\(.*{rel, \"$$THENAME\", \"\)1\(\",\)$$/\\10.1\\2/" rel/reltool.config && \
 	rm -f rel/reltool.config.tmp && \
+	sed -i.tmp "s/^\(.*{vsn, \"\)1\(\"},\)$$/\\10.1\\2/" apps/$$THENAME/src/$$THENAME.app.src && \
+	rm -f apps/$$THENAME/src/$$THENAME.app.src.tmp && \
 	echo "$$TMPL_GITIGNORE" | sed "s/PROJECTNAME/$$THENAME/g" > .gitignore
 
 export TMPL_GEN_SERVER
@@ -156,7 +163,10 @@ install-%:
 # Templates
 
 define TMPL_REBAR_CONFIG
-{sub_dirs, ["rel"]}.
+{sub_dirs, [
+	"rel",
+	"apps/PROJECTNAME"
+]}.
 {erl_opts, [debug_info]}.
 {deps, [
         {vutil, ".*", {git, "git://github.com/virtan/vutil.git", ""}},
