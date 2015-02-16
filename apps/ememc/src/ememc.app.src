@@ -1,0 +1,17 @@
+{application, ememc,
+ [
+  {description, ""},
+  {vsn, "0.1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  sasl,
+                  vutil,
+                  eper,
+                  recon,
+                  os_mon
+                 ]},
+  {mod, { ememc_app, []}},
+  {env, []}
+ ]}.
